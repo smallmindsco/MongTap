@@ -1,4 +1,4 @@
-## MongTap: A Generative MongoDB Database
+## MongTap: A Generative MongoDB Database (coming very soon)
 ### ...wrapped as a stand-alone MCP Server and Claude Desktop extension
 
 LLMs such as Claude are cool, but they are slow. This is not their fault, really, they're big and that's the way it goes. For those of us who work with large amounts of synthetic test data there is a need for something much, much faster. This is that "faster". MongTap is a stand-alone MongoDB "server". You can connect to it with Compass and all the other methods and it looks like any other MongoDB database. However, the collections in MongTap are backed by DataFlood ML models. DataFlood is a very small, lightweight Machine Learning (ML) model format designed specifically for high-performance sythetic test data generation. So, this means that MongTap doesn't store "documents" in the traditional sense. Rather, it creates a Machine Learning model that represents your data using the following mappings w.r.t. the usual CRUD operations:
