@@ -17,7 +17,7 @@ That's probably the most important question. Simply put, you can have infinite r
 
 MongTap DOES NOT store each document that is inserted, so you won't get back exactly what you put in. What you get instead is a system that can do much of what you need for development and testing purposes without the overhead. And, perhaps, for other use-cases as well. For instance, a DataFlood model can be great for generating random states for videogames. It can be used as a way to roll up high-velocity data streams, you can build a dashboard directly off of a DataFlood model (so the dashboard updates very quickly) while "training" it via incoming data at the same time. It can be used as a filter to identify outliers and anomolies. It slices! It dices! Alas it cannot blend a bass...
 
-I suppose it could be considered "SAG" -- Statistically Augmented Generation, but LLMs and DataFlood are statistical models so it's redundant.
+I suppose it could be considered "SAG" -- Statistically Augmented Generation -- but LLMs and DataFlood are statistical models so it's redundant.
 
 ### Human-Editable and Human-Readable ML
 
