@@ -10,7 +10,7 @@
     "url": "https://smallminds.co"
   },
   "homepage": "https://smallminds.co",
-  "icon": "MongTap.png",
+  "icon": "Assets/MongTap.png",
   "server": {
     "type": "node",
     "entry_point": "src/mcp/index.js",
