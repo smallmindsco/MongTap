@@ -147,9 +147,9 @@ MongTap can be configured via environment variables:
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/smallmindsllc/mongtap/issues)
-- **Documentation**: [MongTap Docs](https://smallmindsllc.com/mongtap)
-- **Email**: support@smallmindsllc.com
+- **Issues**: [GitHub Issues](https://github.com/smallmindsco/MongTap/issues)
+- **Documentation**: [MongTap Docs](https://github.com/smallmindsco/MongTap/blob/main/README.md)
+- **Email**: andrew@smallminds.co
 
 ## License
 
