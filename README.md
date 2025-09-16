@@ -17,6 +17,12 @@ MongTap is a Model Context Protocol (MCP) server that provides MongoDB-compatibl
 - ⚡ **High Performance** - Generate 20,000+ documents per second
 - 🎯 **Zero Storage** - Data is generated statistically, not stored
 
+## Documentation
+
+- [Generation Control Parameters](docs/GENERATION_CONTROL.md) - Control document generation with $seed and $entropy
+- [MCPB Installation](docs/MCPB_INSTALLATION.md) - Guide for MCPB bundle installation
+
+
 ## Installation
 
 ### Prerequisites
@@ -604,8 +610,6 @@ MongTap/
 │       ├── schema/          # Schema inference
 │       ├── generator/       # Document generation
 │       └── training/        # Model training
-├── test/                    # Test suites
-├── DesignDocuments/         # Architecture and planning
 └── README.md               # This file
 ```
 
@@ -623,14 +627,6 @@ Key principles:
 ## License
 
 MIT License - See [LICENSE](LICENSE) file for details.
-
-## Documentation
-
-- [Generation Control Parameters](docs/GENERATION_CONTROL.md) - Control document generation with $seed and $entropy
-- [WellDB Comparison](docs/WELLDB_COMPARISON.md) - Comparison with WellDB implementation  
-- [MCPB Installation](docs/MCPB_INSTALLATION.md) - Guide for MCPB bundle installation
-- [Security Audit](docs/SECURITY_AUDIT.md) - Security vulnerability assessment
-- [DataFlood Design](docs/DATAFLOOD_DESIGN.md) - Statistical modeling architecture
 
 ## Privacy Policy
 
