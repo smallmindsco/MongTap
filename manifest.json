@@ -1,0 +1,68 @@
+{
+  "dxt_version": "0.1",
+  "name": "@mongtap/mongtap",
+  "version": "1.0.0",
+  "description": "MongoDB-compatible MCP server with DataFlood statistical modeling and generation control ($seed, $entropy)",
+  "long_description": "MongTap is a Model Context Protocol (MCP) server that provides MongoDB-compatible database functionality through statistical modeling. It allows LLMs like Claude to create, query, and manage databases using natural language, without requiring actual data storage.",
+  "author": {
+    "name": "SmallMinds LLC - smallminds.co",
+    "email": "andrew@smallminds.co",
+    "url": "https://smallminds.co"
+  },
+  "homepage": "https://smallminds.co",
+  "icon": "MongTap.png",
+  "server": {
+    "type": "node",
+    "entry_point": "src/mcp/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/src/mcp/index.js"
+      ],
+      "env": {}
+    }
+  },
+  "tools": [
+    {
+      "name": "generateDataModel",
+      "description": "Generate a DataFlood model from sample data or description'"
+    },
+    {
+      "name": "startMongoServer",
+      "description": "Start a MongoDB-compatible server with DataFlood backing"
+    },
+    {
+      "name": "stopMongoServer",
+      "description": "Stop a running MongoDB server"
+    },
+    {
+      "name": "listActiveServers",
+      "description": "List all active MongoDB servers"
+    },
+    {
+      "name": "queryModel",
+      "description": "Query a DataFlood model directly. Supports generation control via $seed and $entropy parameters in the query."
+    },
+    {
+      "name": "trainModel",
+      "description": "Train or update a model with new data"
+    },
+    {
+      "name": "listModels",
+      "description": "List all available DataFlood models"
+    },
+    {
+      "name": "getModelInfo",
+      "description": "Get detailed information about a model"
+    }
+  ],
+  "keywords": [
+    "generative database",
+    "synthetic test data",
+    "synthetic data",
+    "mongodb",
+    "smallminds",
+    "dataflood"
+  ],
+  "license": "MIT"
+}

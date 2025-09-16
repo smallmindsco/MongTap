@@ -1,0 +1,30 @@
+{
+  "name": "@mongtap/mongtap",
+  "version": "1.0.0",
+  "description": "MongoDB-compatible MCP server with DataFlood statistical modeling and generation control ($seed, $entropy)",
+  "main": "src/mcp/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/mcp/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "mongodb",
+    "dataflood",
+    "statistical-modeling",
+    "data-generation",
+    "model-context-protocol",
+    "seed-control",
+    "entropy-control",
+    "wire-protocol",
+    "bson"
+  ],
+  "author": "SmallMinds LLC - smallminds.co",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.0"
+  }
+}

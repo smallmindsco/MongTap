@@ -1,0 +1,53 @@
+{
+  "manifest_version": "0.1",
+  "name": "mongtap",
+  "version": "1.0.0",
+  "description": "Pure Node.js MCP server with DataFlood statistical modeling and MongoDB-compatible database",
+  "display_name": "MongTap",
+  "author": {
+    "name": "SmallMinds LLC",
+    "url": "https://smallminds.co"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/index.js"]
+    }
+  },
+  "tools": [
+    {
+      "name": "generateDataModel",
+      "description": "Generate a DataFlood model from sample data or description"
+    },
+    {
+      "name": "startMongoServer",
+      "description": "Start a MongoDB-compatible server with DataFlood backing"
+    },
+    {
+      "name": "stopMongoServer",
+      "description": "Stop a running MongoDB server"
+    },
+    {
+      "name": "listActiveServers",
+      "description": "List all active MongoDB servers"
+    },
+    {
+      "name": "queryModel",
+      "description": "Query a DataFlood model directly"
+    },
+    {
+      "name": "trainModel",
+      "description": "Train or update a model with new data"
+    },
+    {
+      "name": "listModels",
+      "description": "List all available DataFlood models"
+    },
+    {
+      "name": "getModelInfo",
+      "description": "Get detailed information about a model"
+    }
+  ]
+}

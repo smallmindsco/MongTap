@@ -1,0 +1,35 @@
+{
+  "storage": {
+    "modelsBasePath": "./mcp-models",
+    "defaultDatabase": "mcp",
+    "databases": {
+      "mcp": {
+        "description": "MCP-created models that appear as MongoDB collections",
+        "path": "mcp"
+      },
+      "trained": {
+        "description": "Models trained from existing data",
+        "path": "trained"
+      },
+      "welldb": {
+        "description": "WellDB database models",
+        "path": "welldb-models"
+      }
+    }
+  },
+  "server": {
+    "defaultPort": 27017,
+    "host": "localhost",
+    "enableAutoTrain": true,
+    "trainThreshold": 100
+  },
+  "generation": {
+    "defaultSeed": null,
+    "defaultEntropy": null,
+    "maxDocuments": 100000
+  },
+  "logging": {
+    "level": "info",
+    "suppressStdio": true
+  }
+}
