@@ -563,7 +563,16 @@ export class QueryEngine extends EventEmitter {
      * Execute aggregation pipeline
      */
     async executeAggregation(collection, pipeline, options = {}) {
-        let documents = await this.executeQuery(collection, {}, { limit: 10000 });
+        // Check if this is just a stats query (for Compass UI)
+        const isStatsQuery = pipeline.some(stage => 
+            stage.$collStats || stage.$count || stage.$indexStats
+        );
+        
+        // For stats queries, use a smaller sample; for data queries use more
+        const limit = isStatsQuery ? 100 : 10000;
+        
+        // Use collection's find method instead of executeQuery to avoid duplicate generation
+        let documents = await collection.find({}, { limit });
         
         for (const stage of pipeline) {
             const [stageName, stageConfig] = Object.entries(stage)[0];
@@ -595,6 +604,32 @@ export class QueryEngine extends EventEmitter {
                     
                 case '$unwind':
                     documents = this.unwindDocuments(documents, stageConfig);
+                    break;
+                    
+                case '$collStats':
+                    // Return collection statistics for MongoDB Compass
+                    // Use a reasonable count for display
+                    const docCount = 100; // Fixed count for UI display
+                    documents = [{
+                        ns: collection.fullName,
+                        localTime: new Date(),
+                        latencyStats: { reads: { latency: 0, ops: 0 }, writes: { latency: 0, ops: 0 } },
+                        storageStats: {
+                            size: docCount * 1000,
+                            count: docCount,
+                            avgObjSize: 1000,
+                            storageSize: docCount * 1200,
+                            totalIndexSize: 8192,
+                            totalSize: docCount * 1200 + 8192
+                        },
+                        count: docCount
+                    }];
+                    break;
+                    
+                case '$count':
+                    // Return document count
+                    const countField = typeof stageConfig === 'string' ? stageConfig : 'count';
+                    documents = [{ [countField]: documents.length }];
                     break;
                     
                 default:

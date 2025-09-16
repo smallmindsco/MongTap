@@ -546,7 +546,7 @@ export class MongoDBServer extends EventEmitter {
         
         // Handle isMaster/hello command
         if (command.isMaster || command.ismaster || command.hello) {
-            return this.messageHandler.createOpReply(requestId, [{
+            return this.messageHandler.createOpMsg({
                 ok: 1,
                 ismaster: true,
                 maxBsonObjectSize: 16777216,
@@ -568,12 +568,12 @@ export class MongoDBServer extends EventEmitter {
                 // Additional capabilities
                 compression: ['snappy', 'zlib'],
                 saslSupportedMechs: []
-            }]);
+            }, 0, requestId);
         }
         
         // Handle ping
         if (command.ping) {
-            return this.messageHandler.createOpReply(requestId, [{ ok: 1 }]);
+            return this.messageHandler.createOpMsg({ ok: 1 }, 0, requestId);
         }
         
         // Handle startSession
@@ -586,20 +586,20 @@ export class MongoDBServer extends EventEmitter {
                     }
                 }
             };
-            return this.messageHandler.createOpReply(requestId, [{
+            return this.messageHandler.createOpMsg({
                 ok: 1,
                 ...sessionId
-            }]);
+            }, 0, requestId);
         }
         
         // Handle endSessions
         if (command.endSessions) {
-            return this.messageHandler.createOpReply(requestId, [{ ok: 1 }]);
+            return this.messageHandler.createOpMsg({ ok: 1 }, 0, requestId);
         }
         
         // Handle refreshSessions
         if (command.refreshSessions) {
-            return this.messageHandler.createOpReply(requestId, [{ ok: 1 }]);
+            return this.messageHandler.createOpMsg({ ok: 1 }, 0, requestId);
         }
         
         // Handle connectionStatus
@@ -617,7 +617,7 @@ export class MongoDBServer extends EventEmitter {
                 response.authInfo.authenticatedUserPrivileges = [];
             }
             
-            return this.messageHandler.createOpReply(requestId, [response]);
+            return this.messageHandler.createOpMsg(response, 0, requestId);
         }
         
         // Handle getParameter
@@ -631,22 +631,22 @@ export class MongoDBServer extends EventEmitter {
                 };
             }
             
-            return this.messageHandler.createOpReply(requestId, [response]);
+            return this.messageHandler.createOpMsg(response, 0, requestId);
         }
         
         // Handle atlasVersion (MongoDB Atlas specific)
         if (command.atlasVersion) {
             // Not Atlas, return command not found
-            return this.messageHandler.createOpReply(requestId, [{
+            return this.messageHandler.createOpMsg({
                 ok: 0,
                 errmsg: "Command not found: atlasVersion",
                 code: 59
-            }]);
+            }, 0, requestId);
         }
         
         // Handle buildInfo
         if (command.buildInfo) {
-            return this.messageHandler.createOpReply(requestId, [{
+            return this.messageHandler.createOpMsg({
                 version: "7.0.0",
                 gitVersion: "mongtap",
                 modules: [],
@@ -655,12 +655,12 @@ export class MongoDBServer extends EventEmitter {
                 sysInfo: "MongTap/DataFlood",
                 versionArray: [7, 0, 0, 0],
                 ok: 1
-            }]);
+            }, 0, requestId);
         }
         
         // Handle hostInfo
         if (command.hostInfo) {
-            return this.messageHandler.createOpReply(requestId, [{
+            return this.messageHandler.createOpMsg({
                 system: {
                     currentTime: new Date(),
                     hostname: "localhost",
@@ -670,13 +670,13 @@ export class MongoDBServer extends EventEmitter {
                     cpuArch: "arm64"
                 },
                 ok: 1
-            }]);
+            }, 0, requestId);
         }
         
         // Handle listDatabases
         if (command.listDatabases) {
             const databases = await this.storage.listDatabases();
-            return this.messageHandler.createOpReply(requestId, [{
+            return this.messageHandler.createOpMsg({
                 databases: databases.map(name => ({
                     name,
                     sizeOnDisk: 0,
@@ -684,7 +684,7 @@ export class MongoDBServer extends EventEmitter {
                 })),
                 totalSize: 0,
                 ok: 1
-            }]);
+            }, 0, requestId);
         }
         
         // Handle listCollections
@@ -720,27 +720,27 @@ export class MongoDBServer extends EventEmitter {
                 }))
             };
             
-            return this.messageHandler.createOpReply(requestId, [{
+            return this.messageHandler.createOpMsg({
                 cursor: cursorDoc,
                 ok: 1
-            }]);
+            }, 0, requestId);
         }
         
         // Handle getLastError
         if (command.getLastError || command.getlasterror) {
-            return this.messageHandler.createOpReply(requestId, [{
+            return this.messageHandler.createOpMsg({
                 ok: 1,
                 err: null,
                 n: 0
-            }]);
+            }, 0, requestId);
         }
         
         // Unknown command
-        return this.messageHandler.createOpReply(requestId, [{
+        return this.messageHandler.createOpMsg({
             ok: 0,
             errmsg: `Unknown command: ${Object.keys(command).join(', ')}`,
             code: 59
-        }]);
+        }, 0, requestId);
     }
 
     /**
@@ -749,10 +749,14 @@ export class MongoDBServer extends EventEmitter {
     async handleInsertCommand(connection, command, requestId) {
         try {
             const result = await this.crudHandlers.handleInsertCommand(command);
-            return this.messageHandler.createOpReply(requestId, [result]);
+            return this.messageHandler.createOpMsg(result, 0, requestId);
         } catch (error) {
             this.logger.error('Insert command error:', error);
-            return this.messageHandler.createErrorReply(requestId, error.message, 1);
+            return this.messageHandler.createOpMsg({
+                ok: 0,
+                errmsg: error.message,
+                code: error.code || 1
+            }, 0, requestId);
         }
     }
 
@@ -762,10 +766,16 @@ export class MongoDBServer extends EventEmitter {
     async handleFindCommand(connection, command, requestId) {
         try {
             const result = await this.crudHandlers.handleFindCommand(command);
-            return this.messageHandler.createOpReply(requestId, [result]);
+            // Use createOpMsg for OP_MSG responses, not createOpReply
+            return this.messageHandler.createOpMsg(result, 0, requestId);
         } catch (error) {
             this.logger.error('Find command error:', error);
-            return this.messageHandler.createErrorReply(requestId, error.message, 1);
+            // Error responses still use createOpMsg
+            return this.messageHandler.createOpMsg({
+                ok: 0,
+                errmsg: error.message,
+                code: error.code || 1
+            }, 0, requestId);
         }
     }
     
@@ -776,10 +786,14 @@ export class MongoDBServer extends EventEmitter {
     async handleUpdateCommand(connection, command, requestId) {
         try {
             const result = await this.crudHandlers.handleUpdateCommand(command);
-            return this.messageHandler.createOpReply(requestId, [result]);
+            return this.messageHandler.createOpMsg(result, 0, requestId);
         } catch (error) {
             this.logger.error('Update command error:', error);
-            return this.messageHandler.createErrorReply(requestId, error.message, 1);
+            return this.messageHandler.createOpMsg({
+                ok: 0,
+                errmsg: error.message,
+                code: error.code || 1
+            }, 0, requestId);
         }
     }
 
@@ -789,10 +803,14 @@ export class MongoDBServer extends EventEmitter {
     async handleDeleteCommand(connection, command, requestId) {
         try {
             const result = await this.crudHandlers.handleDeleteCommand(command);
-            return this.messageHandler.createOpReply(requestId, [result]);
+            return this.messageHandler.createOpMsg(result, 0, requestId);
         } catch (error) {
             this.logger.error('Delete command error:', error);
-            return this.messageHandler.createErrorReply(requestId, error.message, 1);
+            return this.messageHandler.createOpMsg({
+                ok: 0,
+                errmsg: error.message,
+                code: error.code || 1
+            }, 0, requestId);
         }
     }
     
@@ -802,10 +820,14 @@ export class MongoDBServer extends EventEmitter {
     async handleAggregateCommand(connection, command, requestId) {
         try {
             const result = await this.crudHandlers.handleAggregateCommand(command);
-            return this.messageHandler.createOpReply(requestId, [result]);
+            return this.messageHandler.createOpMsg(result, 0, requestId);
         } catch (error) {
             this.logger.error('Aggregate command error:', error);
-            return this.messageHandler.createErrorReply(requestId, error.message, 1);
+            return this.messageHandler.createOpMsg({
+                ok: 0,
+                errmsg: error.message,
+                code: error.code || 1
+            }, 0, requestId);
         }
     }
     
@@ -815,10 +837,14 @@ export class MongoDBServer extends EventEmitter {
     async handleCountCommand(connection, command, requestId) {
         try {
             const result = await this.crudHandlers.handleCountCommand(command);
-            return this.messageHandler.createOpReply(requestId, [result]);
+            return this.messageHandler.createOpMsg(result, 0, requestId);
         } catch (error) {
             this.logger.error('Count command error:', error);
-            return this.messageHandler.createErrorReply(requestId, error.message, 1);
+            return this.messageHandler.createOpMsg({
+                ok: 0,
+                errmsg: error.message,
+                code: error.code || 1
+            }, 0, requestId);
         }
     }
     
@@ -828,7 +854,7 @@ export class MongoDBServer extends EventEmitter {
     async handleCreateIndexCommand(connection, command, requestId) {
         try {
             const result = await this.crudHandlers.handleCreateIndexCommand(command);
-            return this.messageHandler.createOpReply(requestId, [result]);
+            return this.messageHandler.createOpMsg(result, 0, requestId);
         } catch (error) {
             this.logger.error('CreateIndex command error:', error);
             return this.messageHandler.createErrorReply(requestId, error.message, 1);
@@ -841,7 +867,7 @@ export class MongoDBServer extends EventEmitter {
     async handleListIndexesCommand(connection, command, requestId) {
         try {
             const result = await this.crudHandlers.handleListIndexesCommand(command);
-            return this.messageHandler.createOpReply(requestId, [result]);
+            return this.messageHandler.createOpMsg(result, 0, requestId);
         } catch (error) {
             this.logger.error('ListIndexes command error:', error);
             return this.messageHandler.createErrorReply(requestId, error.message, 1);

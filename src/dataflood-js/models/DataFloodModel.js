@@ -89,12 +89,13 @@ export class DataFloodModel {
     if (this.properties) {
       json.properties = {};
       for (const [key, value] of Object.entries(this.properties)) {
-        json.properties[key] = value.toJSON();
+        // Handle both DataFloodModel instances and plain objects
+        json.properties[key] = value.toJSON ? value.toJSON() : value;
       }
     }
     if (this.required) json.required = this.required;
-    if (this.items) json.items = this.items.toJSON();
-    if (this.anyOf) json.anyOf = this.anyOf.map((schema) => schema.toJSON());
+    if (this.items) json.items = this.items.toJSON ? this.items.toJSON() : this.items;
+    if (this.anyOf) json.anyOf = this.anyOf.map((schema) => schema.toJSON ? schema.toJSON() : schema);
     if (this.minimum !== null) json.minimum = this.minimum;
     if (this.maximum !== null) json.maximum = this.maximum;
     if (this.minLength !== null) json.minLength = this.minLength;

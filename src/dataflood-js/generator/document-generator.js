@@ -19,12 +19,17 @@ export class DocumentGenerator {
   
   /**
    * Create a seeded random number generator
+   * Uses a more robust algorithm for consistent results
    */
   seededRandom(seed) {
-    let s = seed;
+    // Use a simple linear congruential generator for consistency
+    let state = seed % 2147483647;
+    if (state <= 0) state += 2147483646;
+    
     return function() {
-      s = Math.sin(s) * 10000;
-      return s - Math.floor(s);
+      // Park and Miller algorithm
+      state = (state * 16807) % 2147483647;
+      return (state - 1) / 2147483646;
     };
   }
   

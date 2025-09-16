@@ -160,8 +160,8 @@ export class Collection extends EventEmitter {
         
         // Debug logging
         if (Object.keys(generationParams).length > 0) {
-            console.log('Generation params:', generationParams);
-            console.log('Filter query after removing params:', filterQuery);
+            this.logger.debug('Generation params:', generationParams);
+            this.logger.debug('Filter query after removing params:', filterQuery);
         }
         
         // Check if we should generate from model
@@ -185,9 +185,9 @@ export class Collection extends EventEmitter {
             this.info.updateStats('generations');
             this.logger.debug(`Generated ${documents.length} documents from model`);
         } else {
-            // Return from cache or empty
-            documents = this.documentCache.slice();
-            this.logger.debug(`Returning ${documents.length} cached documents`);
+            // No model available - return empty array
+            documents = [];
+            this.logger.debug(`No model found for ${this.database}.${this.name}`);
         }
         
         // Apply query filter (using filterQuery without generation params)
@@ -315,14 +315,16 @@ export class Collection extends EventEmitter {
      * Count documents in collection
      */
     async count(query = {}) {
-        if (Object.keys(query).length === 0) {
-            // Fast path for total count
-            return this.info.documentCount;
+        // For DataFlood models, return a reasonable count for UI display
+        // The actual documents are generated on demand
+        const model = await this.storage.getModel(this.database, this.name);
+        if (model) {
+            // Return a fixed count for collections with models
+            return 100;
         }
         
-        // Count matching documents
-        const documents = await this.find(query, { limit: 0 });
-        return documents.length;
+        // No model - return 0
+        return 0;
     }
 
     /**
@@ -669,18 +671,49 @@ export class Collection extends EventEmitter {
      */
     projectDocuments(documents, projection) {
         return documents.map(doc => {
-            const projected = {};
-            
-            // Always include _id unless explicitly excluded
-            if (projection._id !== 0) {
-                projected._id = doc._id;
+            // Handle special MongoDB Compass projections with aggregation expressions
+            if (projection.__doc === '$$ROOT' || projection.__size) {
+                // Compass wants the full document, ignore the special fields
+                // Just handle _id exclusion if specified
+                if (projection._id === 0) {
+                    const result = { ...doc };
+                    delete result._id;
+                    return result;
+                }
+                return doc;
             }
             
-            for (const [field, include] of Object.entries(projection)) {
-                if (field !== '_id' && include) {
-                    const value = this.getFieldValue(doc, field);
-                    if (value !== undefined) {
-                        this.setFieldValue(projected, field, value);
+            // Standard projection handling
+            const projected = {};
+            
+            // Check if this is an inclusion or exclusion projection
+            const fields = Object.keys(projection).filter(k => k !== '_id');
+            const hasInclusions = fields.some(f => projection[f] === 1 || projection[f] === true);
+            const hasExclusions = fields.some(f => projection[f] === 0 || projection[f] === false);
+            
+            if (hasExclusions && !hasInclusions) {
+                // Exclusion projection: start with full document
+                Object.assign(projected, doc);
+                
+                // Remove excluded fields
+                for (const [field, value] of Object.entries(projection)) {
+                    if (value === 0 || value === false) {
+                        delete projected[field];
+                    }
+                }
+            } else {
+                // Inclusion projection: start empty and add specified fields
+                // Always include _id unless explicitly excluded
+                if (projection._id !== 0) {
+                    projected._id = doc._id;
+                }
+                
+                for (const [field, include] of Object.entries(projection)) {
+                    if (field !== '_id' && include) {
+                        const value = this.getFieldValue(doc, field);
+                        if (value !== undefined) {
+                            this.setFieldValue(projected, field, value);
+                        }
                     }
                 }
             }

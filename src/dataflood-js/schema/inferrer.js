@@ -65,10 +65,12 @@ export class SchemaInferrer {
    * Infer schema for specific type
    * Matches C# InferSchemaForType method
    */
-  inferSchemaForType(documents, type) {
+  inferSchemaForType(documents, type, isRoot = false) {
     // Create schema WITHOUT $schema property (only root should have it)
     const schema = new DataFloodModel({ type });
-    schema.$schema = null; // Explicitly null for non-root schemas
+    if (!isRoot) {
+      delete schema.$schema; // Remove $schema for non-root schemas
+    }
     
     switch (type) {
       case 'object':
@@ -134,13 +136,16 @@ export class SchemaInferrer {
           schema.properties[propName] = this.inferSchemaForType(values, propTypes[0]);
         } else {
           // Multiple types for this property - use anyOf
-          schema.properties[propName] = new DataFloodModel({
+          // Don't use DataFloodModel for nested schemas to avoid adding $schema
+          schema.properties[propName] = {
             anyOf: propTypes.map(type => {
               const valuesOfType = values.filter(v => detectType(v) === type);
-              return this.inferSchemaForType(valuesOfType, type);
-            }),
-          });
-          schema.properties[propName].$schema = null;
+              const subSchema = this.inferSchemaForType(valuesOfType, type);
+              // Remove $schema from nested schemas
+              delete subSchema.$schema;
+              return subSchema;
+            })
+          };
         }
       }
     }
@@ -244,13 +249,16 @@ export class SchemaInferrer {
         schema.items = this.inferSchemaForType(allItems, itemTypes[0]);
       } else {
         // Multiple item types - use anyOf
-        schema.items = new DataFloodModel({
+        // Don't use DataFloodModel for nested schemas to avoid adding $schema
+        schema.items = {
           anyOf: itemTypes.map(type => {
             const itemsOfType = allItems.filter(item => detectType(item) === type);
-            return this.inferSchemaForType(itemsOfType, type);
-          }),
-        });
-        schema.items.$schema = null;
+            const subSchema = this.inferSchemaForType(itemsOfType, type);
+            // Remove $schema from nested schemas
+            delete subSchema.$schema;
+            return subSchema;
+          })
+        };
       }
     }
     

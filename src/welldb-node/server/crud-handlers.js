@@ -107,9 +107,8 @@ export class CRUDHandlers {
             // Get or create collection
             const collection = await this.collectionManager.getCollection(database, collectionName);
             
-            // Execute query using query engine
-            const documents = await this.queryEngine.executeQuery(
-                collection,
+            // Execute query using collection's find method
+            const documents = await collection.find(
                 query,
                 {
                     skip: options.skip || 0,

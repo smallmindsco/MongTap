@@ -190,9 +190,8 @@ export class Cursor extends EventEmitter {
             return [];
         }
         
-        // Use query engine to generate documents
-        const documents = await this.queryEngine.executeQuery(
-            this.collection,
+        // Use collection's find method directly
+        const documents = await this.collection.find(
             this.query,
             {
                 skip: this.position,

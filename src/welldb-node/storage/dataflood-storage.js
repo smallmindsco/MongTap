@@ -169,7 +169,7 @@ export class DataFloodStorage {
         const model = await this.getModel(database, collection);
         if (!model) {
             // No model exists, generate simple random documents
-            return this.generateDefaultDocuments(count);
+            return this.generateDefaultDocuments(count, options.seed);
         }
 
         const seed = options.seed || null;
@@ -179,9 +179,14 @@ export class DataFloodStorage {
         // Generate with constraints if provided
         const generator = new DocumentGenerator(seed, entropyOverride);
         
-        // Generate documents
-        const generatedDocs = generator.generateDocuments(model, count);
+        // Generate documents - pass the schema, not the whole model
+        const schema = model.schema || model;  // Support both wrapped models and raw schemas
+        const generatedDocs = generator.generateDocuments(schema, count);
         const documents = [];
+        
+        // Create a seeded random for ObjectId generation if seed provided
+        let idCounter = 0;
+        const seedForId = seed ? seed + 1000000 : null; // Offset seed for ID generation
         
         for (const doc of generatedDocs) {
             // Apply constraints
@@ -193,7 +198,8 @@ export class DataFloodStorage {
             
             // Add MongoDB _id if not present
             if (!doc._id) {
-                doc._id = this.generateObjectId();
+                doc._id = this.generateObjectId(seedForId ? seedForId + idCounter : null);
+                idCounter++;
             }
             
             documents.push(doc);
@@ -379,7 +385,8 @@ export class DataFloodStorage {
         
         // Add MongoDB _id if not present
         if (!document._id) {
-            document._id = this.generateObjectId();
+            // Use seed for deterministic ID if provided
+            document._id = this.generateObjectId(seed ? seed + 999999 : null);
         }
         
         return document;
@@ -425,14 +432,27 @@ export class DataFloodStorage {
     /**
      * Generate default documents when no model exists
      */
-    generateDefaultDocuments(count) {
+    generateDefaultDocuments(count, seed = null) {
         const documents = [];
+        
+        // Create seeded random if seed provided
+        let random = Math.random;
+        if (seed !== null) {
+            let state = seed % 2147483647;
+            if (state <= 0) state += 2147483646;
+            
+            random = function() {
+                state = (state * 16807) % 2147483647;
+                return (state - 1) / 2147483646;
+            };
+        }
+        
         for (let i = 0; i < count; i++) {
             documents.push({
-                _id: this.generateObjectId(),
+                _id: this.generateObjectId(seed ? seed + i : null),
                 index: i,
                 timestamp: new Date(),
-                random: Math.random()
+                random: random()
             });
         }
         return documents;
@@ -441,10 +461,30 @@ export class DataFloodStorage {
     /**
      * Generate a MongoDB ObjectId-like string
      */
-    generateObjectId() {
-        const timestamp = Math.floor(Date.now() / 1000).toString(16);
-        const random = Math.random().toString(16).substring(2, 18);
-        return (timestamp + random).substring(0, 24).padEnd(24, '0');
+    generateObjectId(seed = null) {
+        if (seed === null) {
+            // Use regular random generation
+            const timestamp = Math.floor(Date.now() / 1000).toString(16);
+            const random = Math.random().toString(16).substring(2, 18);
+            return (timestamp + random).substring(0, 24).padEnd(24, '0');
+        } else {
+            // Use seeded generation for deterministic IDs
+            let state = seed % 2147483647;
+            if (state <= 0) state += 2147483646;
+            
+            // Generate deterministic components
+            const timestamp = Math.floor(seed / 1000).toString(16).padStart(8, '0');
+            
+            // Generate 16 hex chars using seeded random
+            let randomPart = '';
+            for (let i = 0; i < 4; i++) {
+                state = (state * 16807) % 2147483647;
+                const value = Math.floor((state - 1) / 2147483646 * 0x10000);
+                randomPart += value.toString(16).padStart(4, '0');
+            }
+            
+            return (timestamp + randomPart).substring(0, 24);
+        }
     }
 
     /**

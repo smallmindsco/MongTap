@@ -290,27 +290,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         let modelData;
         
         if (args.samples && args.samples.length > 0) {
-          // Train from samples
+          // Train from samples - save pure DataFlood schema
           const schema = schemaInferrer.inferSchema(args.samples);
-          const modelObj = { schema: schema || {}, samples: args.samples, trained: true };
-          await storage.saveModel(config.storage.defaultDatabase, modelName, modelObj);
-          models.set(modelName, modelObj);
+          await storage.saveModel(config.storage.defaultDatabase, modelName, schema);
+          models.set(modelName, schema);
           modelData = `Model '${modelName}' trained from ${args.samples.length} sample documents`;
         } else if (args.description) {
-          // Generate from description - simplified approach
-          const samples = [
-            { _description: args.description, _generated: true, _timestamp: new Date().toISOString() }
-          ];
-          const schema = { type: 'object', properties: { _description: { type: 'string' } } };
-          const modelObj = { schema: schema, samples: samples, description: args.description, trained: true };
-          await storage.saveModel(config.storage.defaultDatabase, modelName, modelObj);
-          models.set(modelName, modelObj);
+          // Generate from description - save pure DataFlood schema
+          const schema = { 
+            type: 'object', 
+            properties: { 
+              _description: { type: 'string' },
+              _generated: { type: 'boolean' },
+              _timestamp: { type: 'string', format: 'date-time' }
+            }
+          };
+          await storage.saveModel(config.storage.defaultDatabase, modelName, schema);
+          models.set(modelName, schema);
           modelData = `Model '${modelName}' created from description (simplified)`;
         } else {
           throw new Error('Either samples or description is required');
         }
         
-        const schemaKeys = Object.keys(models.get(modelName)?.schema?.properties || {});
+        const schemaKeys = Object.keys(models.get(modelName)?.properties || {});
         return {
           content: [{
             type: 'text',
@@ -395,8 +397,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const seed = query.$seed;
         const entropy = query.$entropy || 0.5;
         
-        // Generate documents using DataFlood
-        const documents = documentGenerator.generateDocuments(model.schema, count);
+        // Generate documents using DataFlood - model is already the schema
+        const documents = documentGenerator.generateDocuments(model, count);
         
         return {
           content: [{
@@ -406,17 +408,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
 
       case 'trainModel':
-        const existingModel = models.get(args.model) || {};
-        const allSamples = [...(existingModel.samples || []), ...args.documents];
-        const newSchema = schemaInferrer.inferSchema(allSamples);
+        // For incremental training, merge with existing samples if available
+        const newSchema = schemaInferrer.inferSchema(args.documents);
         
-        await storage.saveModel('mongtap', args.model, { schema: newSchema, samples: allSamples });
-        models.set(args.model, { schema: newSchema, samples: allSamples, trained: true });
+        // Save pure DataFlood schema
+        await storage.saveModel(config.storage.defaultDatabase, args.model, newSchema);
+        models.set(args.model, newSchema);
         
         return {
           content: [{
             type: 'text',
-            text: `Model '${args.model}' updated with ${args.documents.length} new documents\n\nTotal samples: ${allSamples.length}\nSchema fields: ${Object.keys(newSchema.properties || {}).join(', ')}`
+            text: `Model '${args.model}' updated with ${args.documents.length} new documents\n\nSchema fields: ${Object.keys(newSchema.properties || {}).join(', ')}`
           }]
         };
 
@@ -472,7 +474,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [{
             type: 'text',
-            text: `Model: ${args.model}\n\nSamples: ${modelInfo.samples?.length || 0}\nTrained: ${modelInfo.trained || false}\n\nSchema:\n${JSON.stringify(modelInfo.schema, null, 2)}`
+            text: `Model: ${args.model}\n\nSchema:\n${JSON.stringify(modelInfo, null, 2)}`
           }]
         };
 
