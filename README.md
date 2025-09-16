@@ -613,17 +613,6 @@ MongTap/
 └── README.md               # This file
 ```
 
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-Key principles:
-- Code from scratch when possible
-- Test thoroughly before committing
-- Follow existing patterns
-- Document new features
-- No unnecessary dependencies
-
 ## License
 
 MIT License - See [LICENSE](LICENSE) file for details.
