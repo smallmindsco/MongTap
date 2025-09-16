@@ -384,4 +384,4 @@ Full documentation available as MCP resource.
 ## See Also
 
 - [MongoDB Query Documentation](https://docs.mongodb.com/manual/tutorial/query-documents/)
-- [MongTap README](./README.md)
+- [MongTap README](https://github.com/smallmindsco/MongTap/blob/main/README.md)
