@@ -544,16 +544,6 @@ MongTap consists of three main components:
                                           │  (Modeling)  │
                                           └──────────────┘
 ```
-
-## Performance
-
-- **Document Generation**: 20,000+ documents/second
-- **Model Training**: <100ms for 1000 samples
-- **Query Response**: <5ms for simple queries
-- **Server Startup**: <1 second
-- **Memory Usage**: <200MB for 10 collections
-- **Concurrent Connections**: 1000+
-
 ## Troubleshooting
 
 ### Claude Desktop doesn't show MongTap tools
