@@ -1,5 +1,11 @@
 # MongTap - MongoDB MCP Server for LLMs
 
+Demo video on YouTube:
+
+[![Watch the video](https://img.youtube.com/vi/Uv4nM2C9qoc/default.jpg)]([https://youtu.be/nTQUwghvy5Q](https://www.youtube.com/watch?v=Uv4nM2C9qoc))
+
+
+
 **By [SmallMinds LLC Co](https://smallminds.co)**
 
 MongTap is a Model Context Protocol (MCP) server that provides MongoDB-compatible database functionality through statistical modeling. It allows LLMs like Claude to create, query, and manage databases using natural language, without requiring actual data storage.
